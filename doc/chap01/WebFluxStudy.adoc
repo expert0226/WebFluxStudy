@@ -315,6 +315,11 @@ Write Everything Twice
 === 브라우저에서 확인
 === Test Code
 
+== TODO
+
+* RouteFunction / HandlerFunction 단위 테스트 세분화
+* adoc 문서 분리
+
 [source, java]
 ----
 package com.example.demo.controller;
