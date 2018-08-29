@@ -1,0 +1,175 @@
+:toc:
+:numbered:
+
+= Spring WebFlux
+
+== WebFlux 는 무엇인가?
+
+.Keywork
+* Async
+* NonBlocking
+* Reactive
+
+제가 스피드웨건도 아니고, 초급임으로 자세한 설명은 생락....
+
+== SpringBoot Project 생성
+
+.기준선
+* SpringBoot 2.x
+** Spring 5.x
+** JDK 8
+
+.의존성
+* spring-boot-starter-webflux
+* spring-boot-starter-test
+
+.etc
+* intellij ultmate
+* gradle
+
+== MVC Style 로 작성하기
+
+먼저 Spring MVC 스타일로 만들어 보겠습니다.
+
+[source, java]
+----
+package com.example.demo.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class MyMVC {
+    @GetMapping("/mvc/hello/{name}")
+    String hello(@PathVariable String name) {
+        return "MVC: Hello " + name;
+    }
+}
+----
+
+구동한 후 로그를 살펴 보도록 하겠습니다.
+
+[source, log]
+----
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.0.4.RELEASE)
+
+2018-08-29 18:07:54.856  INFO 46667 --- [           main] com.example.demo.DemoApplication         : Starting DemoApplication on gimjongmin-ui-MacBook-Pro.local with PID 46667 (/Users/jmkim/IdeaProjects/demo/out/production/classes started by jmkim in /Users/jmkim/IdeaProjects/demo)
+2018-08-29 18:07:54.859  INFO 46667 --- [           main] com.example.demo.DemoApplication         : No active profile set, falling back to default profiles: default
+2018-08-29 18:07:54.897  INFO 46667 --- [           main] onfigReactiveWebServerApplicationContext : Refreshing org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebServerApplicationContext@add0edd: startup date [Wed Aug 29 18:07:54 KST 2018]; root of context hierarchy
+2018-08-29 18:07:55.590  INFO 46667 --- [           main] s.w.r.r.m.a.RequestMappingHandlerMapping : Mapped "{[/mvc/hello/{name}],methods=[GET]}" onto java.lang.String com.example.demo.controller.MyMVC.hello(java.lang.String)
+2018-08-29 18:07:55.630  INFO 46667 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.reactive.resource.ResourceWebHandler]
+2018-08-29 18:07:55.631  INFO 46667 --- [           main] o.s.w.r.handler.SimpleUrlHandlerMapping  : Mapped URL path [/**] onto handler of type [class org.springframework.web.reactive.resource.ResourceWebHandler]
+2018-08-29 18:07:55.707  INFO 46667 --- [           main] o.s.w.r.r.m.a.ControllerMethodResolver   : Looking for @ControllerAdvice: org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebServerApplicationContext@add0edd: startup date [Wed Aug 29 18:07:54 KST 2018]; root of context hierarchy
+2018-08-29 18:07:55.965  INFO 46667 --- [           main] o.s.j.e.a.AnnotationMBeanExporter        : Registering beans for JMX exposure on startup
+2018-08-29 18:07:56.038  INFO 46667 --- [ctor-http-nio-1] r.ipc.netty.tcp.BlockingNettyContext     : Started HttpServer on /0:0:0:0:0:0:0:0:8080
+2018-08-29 18:07:56.039  INFO 46667 --- [           main] o.s.b.web.embedded.netty.NettyWebServer  : Netty started on port(s): 8080
+2018-08-29 18:07:56.044  INFO 46667 --- [           main] com.example.demo.DemoApplication         : Started DemoApplication in 1.423 seconds (JVM running for 1.902)
+----
+
+여기서 주목해야 할 부분은 두 군데입니다.
+
+. Mapping 정보
+[source, log, subs="verbatim,quotes"]
+----
+Mapped "{[/mvc/hello/{name}],methods=[GET]}"
+----
+
+. Netty
+[source, log, subs="verbatim,quotes"]
+----
+Netty started on port(s): 8080
+----
+
+WebFlux 를 사용하는 경우 기본으로 내장 톰캣이 아닌 내장 #*네티*# 를 사용하게 됩니다. +
+#*서블릿 컨테이너가 필요하지 않으니까요!!!*#
+
+자 이제 브라우저를 접근해 보겠습니다.
+
+
+
+[source, java]
+----
+package com.example.demo.controller;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.server.*;
+import reactor.core.publisher.Mono;
+
+import static org.springframework.web.reactive.function.BodyInserters.fromObject;
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
+@RestController
+public class MyMVC {
+    @GetMapping("/mvc/hello/{name}")
+    String hello(@PathVariable String name) {
+        return "MVC: Hello " + name;
+    }
+}
+
+@Configuration
+class MyFlux {
+    HandlerFunction helloHandler = req -> {
+        String name = req.pathVariable("name");
+        Mono<String> result = Mono.just("WebFlux 1, 2: Hello " + name);
+
+        Mono<ServerResponse> res = ok().body(result, String.class);
+
+        return res;
+    };
+
+    @Bean
+    public RouterFunction<ServerResponse> route() {
+        RouterFunction router = req ->
+            RequestPredicates.path("/flux1/hello/{name}").test(req) ? Mono.just(helloHandler) : Mono.empty();
+
+        return router;
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> route2() {
+        return req ->
+            RequestPredicates.path("/flux2/hello/{name}").test(req) ? Mono.just(helloHandler) : Mono.empty();
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> route3() {
+        return RouterFunctions.route(
+                RequestPredicates.path("/flux3/hello/{name}"),
+                req -> ok().body(fromObject("WebFlux 3: Hello " + req.pathVariable("name")))
+        );
+    }
+
+    HandlerFunction handler2 = req -> {
+        String res = "WebFlux 4: Hello " + req.pathVariable("name");
+        return ok().body(fromObject(res));
+    };
+
+    @Bean
+    public RouterFunction<ServerResponse> route4() {
+        return RouterFunctions.route(
+                RequestPredicates.path("/flux4/hello/{name}"),
+                handler2
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> route5() {
+        return RouterFunctions.route(
+                GET("/flux5/hello/{name}"),
+                handler2
+        );
+    }
+}
+----
