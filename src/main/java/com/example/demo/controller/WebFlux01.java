@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class MyMVC {
-    @GetMapping("/mvc/hello/{name}")
+public class WebFlux01 {
+    @GetMapping("/webflux01/hello/{name}")
     String hello(@PathVariable String name) {
-        return "MVC: Hello " + name;
+        return "WebFlux01: Hello " + name;
     }
 }
