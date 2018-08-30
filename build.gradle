@@ -25,6 +25,9 @@ repositories {
 
 
 dependencies {
+    compile group: 'javax.el', name: 'javax.el-api', version: '3.0.0'
+    compile group: 'org.glassfish', name: 'javax.el', version: '3.0.0'
+
     compile('org.springframework.boot:spring-boot-starter-webflux')
     testCompile('org.springframework.boot:spring-boot-starter-test')
     testCompile('io.projectreactor:reactor-test')

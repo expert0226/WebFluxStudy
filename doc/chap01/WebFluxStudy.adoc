@@ -12,6 +12,12 @@
 
 제가 스피드웨건도 아니고, 초급임으로 자세한 설명은 생락....
 
+토비님의 스프링캠프 2017 동영상을 참고하세요.
+
+link:https://www.youtube.com/watch?v=HKlUvCv9hvA[스프링캠프 2017: Async & Spring]
+
+link:https://www.youtube.com/watch?v=2E_1yb8iLKk&t=1313s[스프링캠프 2017: Spring Web Flux]
+
 == SpringBoot Project 생성
 
 .기준선
