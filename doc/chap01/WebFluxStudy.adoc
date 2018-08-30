@@ -3,12 +3,25 @@
 
 = Spring WebFlux
 
+== 선수 지식
+
+* 객체 지향 4대 원칙
+* 객체 설계 지향 설계 SOLID 원칙
+* 객체 지향 디자인 패턴
+* 스프링 삼각형 + 설정 정보
+* 스프링 부트 2.x
+
+.추천 도서
+* link:http://www.yes24.com/24/Goods/17350624?Acode=101[스프링 입문을 위한 자바 객체 지향의 원리와 이해]
+* 스프링 부트는 본인의 입맛에 맞는...
+
 == WebFlux 는 무엇인가?
 
 .Keywork
 * Async
-* NonBlocking
+* NonBlock
 * Reactive
+* FP: Functional Programming
 
 제가 스피드웨건도 아니고, 초급임으로 자세한 설명은 생락....
 
@@ -144,7 +157,7 @@ public class WebFlux01Test {
 
 == WebFlux 2: RouterFunction & HandlerFunction 사용하기 1
 
-=== 사전 지식
+=== 사전 지식 & 목표
 
 .RouterFunction
 * RestController 대체
@@ -254,7 +267,7 @@ public class WebFlux02Test {
 
 == WebFlux 3: RouterFunction & HandlerFunction 사용하기 2
 
-=== 사전 지식
+=== 사전 지식 & 목표
 
 HandlerFunction 에 간단한 로직만 있다면 그냥 RouterFunction 을 정의하면서 처리하는 것도 나쁘지 않아...
 
@@ -315,16 +328,13 @@ image:images/003.png[브라우저로 접근]
 (이럴 때는 WET 이 낫긴 한데.. ㅡㅡ;) +
 Write Everything Twice
 
-=== 사전 지식
+== WebFlux 4: RouterFunction & HandlerFunction 사용하기 3
+
+=== 사전 지식 & 목표
+
+조금 더 깔끔하게...
+
 === Source 코드 작성
-=== 로그 분석
-=== 브라우저에서 확인
-=== Test Code
-
-== TODO
-
-* RouteFunction / HandlerFunction 단위 테스트 세분화
-* adoc 문서 분리
 
 [source, java]
 ----
@@ -332,76 +342,120 @@ package com.example.demo.controller;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.server.*;
-import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.function.server.HandlerFunction;
+import org.springframework.web.reactive.function.server.RequestPredicates;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
+
+import static org.springframework.web.reactive.function.BodyInserters.fromObject;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
+@Configuration
+public class WebFlux04 {
+    HandlerFunction handler = req -> {
+        String res = "WebFlux04: Hello " + req.pathVariable("name");
+        return ok().body(fromObject(res));
+    };
+
+    @Bean
+    public RouterFunction<ServerResponse> route04() {
+        return RouterFunctions.route(
+                RequestPredicates.path("/webflux04/hello/{name}"),
+                handler
+        );
+    }
+}
+----
+
+=== 로그 분석
+
+[source, log]
+----
+Mapped /webflux04/hello/{name} -> com.example.demo.controller.WebFlux04$$Lambda$237/1041547629@5c18016b
+----
+
+=== 브라우저에서 확인
+
+image:images/004.png[브라우저로 접근]
+
+=== Test Code
+
+...생략...
+
+== WebFlux 5: RouterFunction & HandlerFunction 사용하기 4
+
+=== 사전 지식 & 목표
+
+RequestPredicates.path("/webflux04/hello/{name}") 너무 길어요.
+
+줄여보아요.
+
+GET("/webflux05/hello/{name}")
+
+=== Source 코드 작성작성
+
+[source, java]
+----
+package com.example.demo.controller;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.server.HandlerFunction;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
-@RestController
-public class MyMVC {
-    @GetMapping("/mvc/hello/{name}")
-    String hello(@PathVariable String name) {
-        return "MVC: Hello " + name;
-    }
-}
-
 @Configuration
-class MyFlux {
-    HandlerFunction helloHandler = req -> {
-        String name = req.pathVariable("name");
-        Mono<String> result = Mono.just("WebFlux 1, 2: Hello " + name);
-
-        Mono<ServerResponse> res = ok().body(result, String.class);
-
-        return res;
-    };
-
-    @Bean
-    public RouterFunction<ServerResponse> route() {
-        RouterFunction router = req ->
-            RequestPredicates.path("/flux1/hello/{name}").test(req) ? Mono.just(helloHandler) : Mono.empty();
-
-        return router;
-    }
-
-    @Bean
-    public RouterFunction<ServerResponse> route2() {
-        return req ->
-            RequestPredicates.path("/flux2/hello/{name}").test(req) ? Mono.just(helloHandler) : Mono.empty();
-    }
-
-    @Bean
-    public RouterFunction<ServerResponse> route3() {
-        return RouterFunctions.route(
-                RequestPredicates.path("/flux3/hello/{name}"),
-                req -> ok().body(fromObject("WebFlux 3: Hello " + req.pathVariable("name")))
-        );
-    }
-
-    HandlerFunction handler2 = req -> {
-        String res = "WebFlux 4: Hello " + req.pathVariable("name");
+public class WebFlux05 {
+    HandlerFunction handler = req -> {
+        String res = "WebFlux05: Hello " + req.pathVariable("name");
         return ok().body(fromObject(res));
     };
 
     @Bean
-    public RouterFunction<ServerResponse> route4() {
+    public RouterFunction<ServerResponse> route05() {
         return RouterFunctions.route(
-                RequestPredicates.path("/flux4/hello/{name}"),
-                handler2
-        );
-    }
-
-    @Bean
-    public RouterFunction<ServerResponse> route5() {
-        return RouterFunctions.route(
-                GET("/flux5/hello/{name}"),
-                handler2
+                GET("/webflux05/hello/{name}"),
+                handler
         );
     }
 }
 ----
+
+=== 로그 분석
+
+오 좀 달라요.
+
+[source, log]
+----
+Mapped (GET && /webflux05/hello/{name}) -> com.example.demo.controller.WebFlux05$$Lambda$238/334593716@4351c8c3
+----
+
+=== 브라우저에서 확인
+
+image:images/005.png[브라우저로 접근]
+
+=== Test Code
+
+...역시 생략...
+
+
+
+== TODO
+
+=== 사전 지식 & 목표
+
+=== Source 코드
+
+=== 로그 분석
+
+=== 브라우저에서 확인
+
+=== Test Code
+
+== To be continued...
