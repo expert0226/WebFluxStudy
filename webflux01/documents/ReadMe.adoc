@@ -1,21 +1,21 @@
 :toc:
 :numbered:
 
-= WebFlux 와의 첫 만남
+= WebFlux 첫 만남
 
 == Spring WebFlux 프로젝트 만들기
 
 * https://start.spring.io/ 에 접속한다.
 * Dependencies 에서 Reactive Web 을 선택한다.
 * 나머지는 취향의 문제...
-** image:images/001.png[start.spring.io]
+** image:./images/001.png[start.spring.io]
 * [Generate Project] 버튼을 클릭해서 zip 로 다운로드 받는다.
 * 다운로드 반은 zip 파일을 적당한 위치에서 압축 해제한다.
 * 본인이 선호하는 IDE 로 프로젝트를 오픈한다.
-** image:images/002.png[build.gradle 를 Open 해 주자]
-** image:images/003.png[Open as Project 를 선택해 주자]
-** image:images/004.png[몇 가지 설정을 조정해 주자]
-** image:images/005.png[Open 완료]
+** image:./images/002.png[build.gradle 를 Open 해 주자]
+** image:./images/003.png[Open as Project 를 선택해 주자]
+** image:./images/004.png[몇 가지 설정을 조정해 주자]
+** image:./images/005.png[Open 완료]
 
 == Rest API 로 Hello WebFlux 찍어 보기
 
@@ -91,7 +91,7 @@ Console 에 표시된 로그 중에 중요하게 기억해야 할 것들이 몇�
 
 브라우저에서 http://localhost:8080/hello 로 접속해 보자.
 
-** image:images/006.png[IE 라니... 나의 Chrome 는 소중하니까!]
+** image:./images/006.png[IE 라니... 나의 Chrome 는 소중하니까!]
 
 여기까지 봤을 때 기존 WebMVC 와의 차이는 Tomcat 대신 Netty 를 쓴다는 것 외에는 차이가 없어 보인다.
 하지만 그 차이는 사실 매우 크다. 더 이상 Servlet 스펙을 고려하지 않아도 된다는 것이다.
@@ -153,8 +153,8 @@ public class Webflux01Application {
 
 프로젝트를 재실행 후에 각각 브라우저 접근해 보자.
 
-* image:images/007.png[Hello Mono!!!]
-* image:images/008.png[Hello Flux!!!]
+* image:./images/007.png[Hello Mono!!!]
+* image:./images/008.png[Hello Flux!!!]
 
 웹 브라우저 사용자 입장에서는 차이가 없다는 것을 알 수 있다. +
 개발 입장에서도 차이가 없는 것 같지만... 위에 작성한 코드는 WebMVC 방식을 짬봉해서 만들어진 것이다. +
