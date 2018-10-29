@@ -3,7 +3,7 @@
 
 = WebFlux 002
 
-== RouteFunction 001 : 건드려 보기
+== RouteFunction 001: 건드려 보기
 
 기존 패키지 com.heaven.webflux01 밑에 Webflux02 클래스를 생성하고 아래 코드를 타이핑해 보자.
 
@@ -26,8 +26,8 @@ public class Webflux02 {
     @Bean
     RouterFunction<ServerResponse> route001() {
         return RouterFunctions.route(
-                GET("/webflux02/hello"),
-                req -> ServerResponse.ok().body(fromObject("Hello WebFlux"))
+            GET("/webflux02/hello"),
+            req -> ServerResponse.ok().body(fromObject("Hello WebFlux"))
         );
     }
 }
@@ -65,8 +65,8 @@ Webflux02 클래스에 아래 메서드를 추가해 주자.
 @Bean
 RouterFunction<ServerResponse> route002() {
     return RouterFunctions.route(
-            GET("/webflux02/hello/{name}"),
-            req -> ServerResponse.ok().body(fromObject("Hello " + #req.pathVariable("name")#))
+        GET("/webflux02/hello/{name}"),
+        req -> ServerResponse.ok().body(fromObject("Hello " + #req.pathVariable("name")#))
     );
 }
 ----
@@ -74,7 +74,7 @@ RouterFunction<ServerResponse> route002() {
 프로그램을 재실행하고 로그를 살펴보면 "Mapped (GET && /webflux02/hello/{name})" 추가된 것을 확인할 수 있다. +
 웹브라우저에 "http://localhost:8080/webflux02/hello/여름나라 겨울이야기" 를 입력했을 때 응답은 다음 그림과 같다.
 
-** image:images/lesson002/002.PNG[RouteFunction]
+** image:images/lesson002/003.PNG[RouteFunction]
 
 == RouteFunction 002: 질의 문자열(Query String) 이용
 
@@ -101,42 +101,80 @@ RouterFunction<ServerResponse> route003() {
 ----
 
 queryParam 메서드가 Optional 을 반환하기 때문에 orElse 처리를 해 주었다.
-프로그램을 재실행하고 웹브라우저로 접속해 보자.
+프로그램을 재실행하고 웹브라우저에 name, age 의 4 가지 조합으로 각각 접속해 보자.
 
-** image:images/lesson002/003.PNG[RouteFunction]
+image:images/lesson002/004.PNG[RouteFunction]
 
-다음과 같은 형식으로 접속해 보는 건 독자의 몫으로 남기겠다.
+image:images/lesson002/005.PNG[RouteFunction]
 
-* http://localhost:8080/webflux02/query?name=여름이&age=8
-* http://localhost:8080/webflux02/query?name=여름이
-* http://localhost:8080/webflux02/query?age=8
-* http://localhost:8080/webflux02/query
+image:images/lesson002/006.PNG[RouteFunction]
 
-== RouteFunction 003: Form 정보 이용
+image:images/lesson002/007.PNG[RouteFunction]
+
+위 그림들을 통해 req.queryParam("...") 이 왜 Optional 을 반환하는지 짐작할 수 있기를...
+
+== RouteFunction 003: JSON 정보 이용
+
+[source,java]
+[subs="quotes"]
+----
+    @Bean
+    RouterFunction<ServerResponse> route004() {
+        return RouterFunctions.route(POST("/webflux02/json"),
+            req -> req.body(toMono(User.class))
+                .doOnNext(user -> log.info(user.toString()))
+                .then(ok().build()));
+    }
+}
+----
+
+JSON 데이터를 POST 로 넘겨서 확인하는 것은 역시 독자의 몫으로...
+(HTML 작성, curl, httpie, postman...)
+
+image:images/lesson002/008.PNG[RouteFunction]
+
+image:images/lesson002/009.PNG[RouteFunction]
+
+== RouteFunction 004: RouteFunction Chaining
+
+게시판에 대한 Route 를 총괄하는 함수를 만들어 보자.
 
 [source,java]
 [subs="quotes"]
 ----
 @Bean
-RouterFunction<ServerResponse> route004() {
+RouterFunction<ServerResponse> route005() {
     return RouterFunctions.route(
-            POST("/webflux02/post"),
-            req -> ServerResponse
-                    .ok()
-                    .body(
-                            fromObject(
-                                    String.format(
-                                            "name: %s, age: %s",
-                                            #req.formData().block().get("name")#,
-                                            #req.formData().block().get("age")#
-                                    )
-                            )
-                    )
-    );
+            GET("/boards"),
+            req -> ok().body(fromObject("GET /boards")))
+        .andRoute(
+            GET("/boards/{num}"),
+            req -> ok().body(fromObject("GET /boards/" + req.pathVariable("num"))))
+        .andRoute(
+            POST("/boards"),
+            req -> req.body(toMono(Board.class))
+                .doOnNext(board -> log.info(board.toString()))
+                .then(ok().build()))
+        .andRoute(
+            PUT("/boards"),
+            req -> req.body(toMono(Board.class))
+                .doOnNext(board -> log.info(board.toString()))
+                .then(ok().build()))
+        .andRoute(
+            DELETE("/boards/{num}"),
+            req -> ok().body(fromObject("DELETE /board/" + req.pathVariable("num"))));
 }
 ----
 
-Post 데이터를 넘겨서 확인하는 것은 역시 독작의 몫으로...
-(HTML 작성, curl, httpie, postman...)
-
-
+* GET /boards 호출
+image:images/lesson002/010.PNG[RouteFunction]
+* GET /boards/{num} 호출
+image:images/lesson002/011.PNG[RouteFunction]
+* POST /boards 호출
+image:images/lesson002/012.PNG[RouteFunction]
+image:images/lesson002/013.PNG[RouteFunction]
+* PUT /boards 호출
+image:images/lesson002/014.PNG[RouteFunction]
+image:images/lesson002/015.PNG[RouteFunction]
+* DELETE /boards/{num} 호출
+image:images/lesson002/016.PNG[RouteFunction]

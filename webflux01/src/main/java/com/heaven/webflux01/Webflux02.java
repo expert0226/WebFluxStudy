@@ -1,22 +1,19 @@
 package com.heaven.webflux01;
 
-import lombok.*;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
-import static org.springframework.web.reactive.function.BodyExtractors.toFormData;
 import static org.springframework.web.reactive.function.BodyExtractors.toMono;
 import static org.springframework.web.reactive.function.BodyInserters.fromObject;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.PUT;
+import static org.springframework.web.reactive.function.server.RequestPredicates.DELETE;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Slf4j
@@ -47,8 +44,8 @@ public class Webflux02 {
                                 fromObject(
                                         String.format(
                                                 "name: %s, age: %s",
-                                                req.queryParam("name"),
-                                                req.queryParam("age")
+                                                req.queryParam("name").orElse("무명"),
+                                                req.queryParam("age").orElse("미상")
                                         )
                                 )
                         )
@@ -57,7 +54,7 @@ public class Webflux02 {
 
     @Bean
     RouterFunction<ServerResponse> route004() {
-        return RouterFunctions.route(POST("/webflux02/post"),
+        return RouterFunctions.route(POST("/webflux02/json"),
                 req -> req.body(toMono(User.class))
                         .doOnNext(user -> log.info(user.toString()))
                         .then(ok().build()));
@@ -70,10 +67,40 @@ public class Webflux02 {
 //                    .then(ok().build())
 //        );
     }
+
+    @Bean
+    RouterFunction<ServerResponse> route005() {
+        return RouterFunctions.route(
+                GET("/boards"),
+                req -> ok().body(fromObject("GET /boards")))
+            .andRoute(
+                GET("/boards/{num}"),
+                req -> ok().body(fromObject("GET /boards/" + req.pathVariable("num"))))
+            .andRoute(
+                POST("/boards"),
+                req -> req.body(toMono(Board.class))
+                    .doOnNext(board -> log.info(board.toString()))
+                    .then(ok().build()))
+            .andRoute(
+                PUT("/boards"),
+                req -> req.body(toMono(Board.class))
+                    .doOnNext(board -> log.info(board.toString()))
+                    .then(ok().build()))
+            .andRoute(
+                DELETE("/boards/{num}"),
+                req -> ok().body(fromObject("DELETE /board/" + req.pathVariable("num"))));
+    }
 }
 
 @Data
 class User {
     private String name;
     private Integer age;
+}
+
+@Data
+class Board {
+    private int num;
+    private String title;
+    private String content;
 }
