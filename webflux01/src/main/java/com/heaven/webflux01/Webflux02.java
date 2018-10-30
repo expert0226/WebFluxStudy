@@ -82,9 +82,9 @@ public class Webflux02 {
                     .doOnNext(board -> log.info(board.toString()))
                     .then(ok().build()))
             .andRoute(
-                PUT("/boards"),
+                PUT("/boards/{num}"),
                 req -> req.body(toMono(Board.class))
-                    .doOnNext(board -> log.info(board.toString()))
+                    .doOnNext(board -> log.info(req.pathVariable("num"), ": ", board.toString()))
                     .then(ok().build()))
             .andRoute(
                 DELETE("/boards/{num}"),
