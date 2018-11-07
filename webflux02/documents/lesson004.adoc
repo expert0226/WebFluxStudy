@@ -1,0 +1,106 @@
+:toc:
+:numbered:
+
+= WebClient & WebTestClient
+
+link:https://docs.spring.io/spring/docs/current/spring-framework-reference/pdf/testing-webtestclient.pdf[WebTestClient PDF]
+
+image:images/lesson004/000.png[WebTestClient PDF, 200]
+
+link:https://developer.yahoo.com/social/rest_api_guide/http-response-codes.html?guccounter=1[HTTP Response Status Codes]
+
+image:images/lesson004/010.png[HTTP Response Status Codes, 200]
+
+[source,java]
+[subs="quotes"]
+----
+package com.heaven.webflux02;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
+
+public class RouteFunction02Test {
+    WebTestClient webTestClient;
+
+    @Before
+    public void setUp() {
+        webTestClient = WebTestClient
+                .bindToRouterFunction(new RouteFunction02().route())
+                .build();
+    }
+
+    @Test
+    public void list() {
+        webTestClient.get()
+                .uri("/boards")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Board.class);
+    }
+
+    @Test
+    public void create() {
+        Board board = new Board() {
+            {
+                this.setTitle("제목");
+                this.setContent("내용");
+            }
+        };
+
+        webTestClient.post()
+                .uri("/boards")
+                .body(Mono.just(board), Board.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody().isEmpty();
+    }
+
+    @Test
+    public void read() {
+        webTestClient.get()
+                .uri("/boards/3")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .json("{\"title\":\"제목 3\", \"content\":\"내용 3\"}");
+    }
+
+    @Test
+    public void put() {
+        Board board = new Board() {
+            {
+                this.setTitle("제목");
+                this.setContent("내용");
+            }
+        };
+
+        webTestClient.put()
+                .uri("/boards/5")
+                .body(Mono.just(board), Board.class)
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
+    }
+
+    @Test
+    public void delete() {
+        webTestClient.delete()
+                .uri("/boards/7")
+                .exchange()
+                .expectStatus().isNoContent()
+                .expectBody().isEmpty();
+    }
+}
+----
+
+아.. 아름다운 코드야!!! 심지어
+
+@RunWith(SpringRunner.class) +
+@WebFluxTest(RouteFunction02.class)
+
+조차 없다. +
+이것이 바로 @WebMVC 넘어 WebFlux 기준으로 작성한 코드에서의 Unit Test 의 아름다움이랄까... +
+아직 학습이 미천하여 Repository 대신 List<Board> 를 쓰긴 했지만....

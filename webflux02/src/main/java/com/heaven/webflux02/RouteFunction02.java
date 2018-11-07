@@ -13,19 +13,17 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.web.reactive.function.BodyExtractors.toMono;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
-import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.*;
 
 @Slf4j
 @Component
 public class RouteFunction02 {
-
-
     @Bean
     RouterFunction<ServerResponse> route() {
         BoardHandler boardHandler = new BoardHandler();
@@ -66,9 +64,22 @@ class BoardHandler {
         return res;
     };
 
-    HandlerFunction create = req -> req.body(toMono(Board.class))
-            .doOnNext(board -> { board.setNum(num++); boards.add(board); })
-            .then(ok().build());
+    HandlerFunction create = req -> {
+        URI uri = null;
+
+        try {
+            uri = new URI("/boards");
+        } catch (java.net.URISyntaxException ex) {
+
+        }
+
+        return req.body(toMono(Board.class))
+                .doOnNext(board -> {
+                    board.setNum(num++);
+                    boards.add(board);
+                })
+                .then(created(uri).build());
+    };
 
     HandlerFunction read = req -> {
         int num = Integer.valueOf(req.pathVariable("num"));
@@ -105,7 +116,7 @@ class BoardHandler {
                             break;
                         }
                     }
-                }).then(notFound().build());
+                }).then(noContent().build());
     };
 
     HandlerFunction delete = req -> {
@@ -118,7 +129,7 @@ class BoardHandler {
             }
         }
 
-        Mono<ServerResponse> res = notFound().build();
+        Mono<ServerResponse> res = noContent().build();
 
         return res;
     };
