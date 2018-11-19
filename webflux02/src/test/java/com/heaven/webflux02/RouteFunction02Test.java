@@ -85,4 +85,9 @@ public class RouteFunction02Test {
                 .expectStatus().isNoContent()
                 .expectBody().isEmpty();
     }
+
+    @Test
+    public void test() {
+        Mono.just("Hello WebFlux").log().subscribe();
+    }
 }
